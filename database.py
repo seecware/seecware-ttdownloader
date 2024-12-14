@@ -30,10 +30,10 @@ def fetch_keys():
     conn.close()
     return keys
 
-def add_user(user_id_, user_name):
+def add_user(user_id, user_name):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO users (user_id, user_name) VALUES (?, ?)", (user_id, user_name))
+    cursor.execute("INSERT INTO users (user_id, username) VALUES (?, ?)", (user_id, user_name))
     conn.commit()
     conn.close()
 

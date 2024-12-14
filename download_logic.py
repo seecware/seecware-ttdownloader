@@ -9,85 +9,95 @@
 
 # # IMPORTING DEPENDENCIES
 
+from db_downloader_middleware import create_new_user, insert_video
+
 import http.client
 import json
 import os
-import sys
-import database
 
-# DECLARING CONSTANTS
-
-# DATABASE PARAMS
-#---------------------------------------------------
 UNIQUE_ID = "aweme_id"
-HEADERS = {
-    'X-RapidAPI-Key': NULL,
-    'X-RapidAPI-Host': "tiktok-video-no-watermark2.p.rapidapi.com"
-}
+videos = []
+images = []
 
-cursor = "0"
-hasMore = True
-videos = {}
-flag = True
-    
-conn = http.client.HTTPSConnection(HEADERS["X-RapidAPI-Host"])
+def execute_logic(user, selected_key):
+    HEADERS = {
+        'X-RapidAPI-Key': selected_key,
+        'X-RapidAPI-Host': "tiktok-video-no-watermark2.p.rapidapi.com"
+    }
 
-# # $video VARIABLE STRUCTURE IS GIVEN AS FOLLOWS:
-# #videos = {
-# #  user_id: { 
-# #    username: [(aweme_id_1, conut_name_1),
-# #               (aweme_id_2, count_name_2),
-# #               .
-# #               .
-# #               . 
-# #               (aweme_id_n, conut_name_n)]
-# #  }
-# # }
+    cursor = "0"
+    hasMore = True
+    videos_acc = []
+    images_acc = []
 
-# CREAING USER FOLDER CONTAINER
+    conn = http.client.HTTPSConnection(HEADERS["X-RapidAPI-Host"])
 
-# Defining the variable allocator function to design variable structure:
-
-def variable_alocator(user, HEADERS):
-    global videos
-    conn.request("GET", "/user/info?unique_id=%40" + user, headers=HEADERS)
+    # Getting user_id from given user string.
+    conn.request("GET", "/user/info?unique_id=" + user, headers=HEADERS)
     res = conn.getresponse()
     data = res.read()
     jsonized_data = json.loads(data)
-    add_user(jsonized_data["data"]["user"]["uniqueId"], jsonized_data["data"]["user"]["id"])        # Lacks of cheking if user_id already exists! Add later.
-    # CREATING DATA SCTRUCTURE
-    videos[jsonized_data["data"]["user"]["uniqueId"]] = {
-        jsonized_data["data"]["user"]["id"]: []
-    }
-    return (jsonized_data["data"]["user"]["id"], jsonized_data["data"]["user"]["uniqueId"])
+    user_id = jsonized_data['data']['user']['id']
+    create_new_user(user_id, user)
+    os.mkdir(user)
+    
+    # Getting video data.
+    while hasMore:
+        hasMore, cursor, video_fragment, image_fragment = video_fetcher(user_id, cursor, HEADERS, conn)
+        videos_acc.extend(video_fragment)
+        print(f"Found videos: {len(videos_acc)}")
+        images_acc.extend(image_fragment)
+        print(f"Found images: {len(images_acc)}")
+    
+    download_videos(videos_acc, user)
+    download_images(images_acc, user)
+    
+
 
 # # video_fetcher takes username, cursor and HEADERS as params
 # # in order to fetch data from API, so we can actively use it
 # # in a loop so we return cursor, hasMore and video_buffer da-
 # # ta in order to refactor all in another function.
 
-def video_fetcher(user, cursor, HEADERS):
-    global videos
-    conn.request("GET", "/user/posts?unique_id=%40" + user + "&count=35&cursor=" + cursor , headers=HEADERS)
+def video_fetcher(user_id, cursor, headers, conn):
+    conn.request("GET", "/user/posts?user_id=" + user_id +"&count=35&cursor=" + str(cursor), headers=headers)
     res = conn.getresponse()
     data = res.read()
     jsonized_data = json.loads(data)
-    video_buffer = [(video["aweme_id"], video["play"]) for video in jsonized_data["data"]["videos"]]
-    return (jsonized_data["data"]["cursor"], jsonized_data["data"]["hasMore"], video_buffer)
+    video_fragment = [(video['aweme_id'], video['play'], video['video_id'], video['title']) for video in jsonized_data['data']['videos'] if video['aweme_id'] != ""]
+    image_fragment = []
+    for item in jsonized_data['data']['videos']:
+        if (item['aweme_id'] == ""):
+            print("aux")
+            image_fragment.extend([image for image in item['images']])
 
-# # download_videos fnc worksaround the process of taking the
+    new_cursor = jsonized_data['data']['cursor']
+    hasMore = jsonized_data['data']['hasMore']
+    return (hasMore, new_cursor, video_fragment, image_fragment)
+
+
+# # download_videos fnc workaround the process of taking the
 # # complete video list, so it can use wget from system to do-
 # # load videos to disk.
 
-def download_videos(video_list):
+def download_videos(video_list, user):
     count = 0
     for item in video_list:
-        add_video(aweme_id, video_id, video_url, tittle, user_id)
         video_url = item[1]
+        insert_video(item[0], item[2], item[1], item[3], user)
         cmd = "wget -O " + "./" + user + "/" + user + str(count) + ".mp4 " + "'" + video_url + "'"
         os.system(cmd)
         count += 1
 
+
+def download_images(image_list, user):
+    count = 0
+    os.mkdir("./" + user + "/img")
+    for item in image_list:
+        image_url = item
+        cmd = "wget -O " + "./" + user + "/img/" + user + str(count) + ".jpeg " + "'" + image_url + "'"
+        os.system(cmd)
+        count += 1
 
 # # further objective is to save all data in MySQL so we can
 # # download only newer videos, reducing the API calls so we
@@ -96,16 +106,3 @@ def download_videos(video_list):
 
 # # Function to save later users, storing in database to start
 # # downloaded when needed.
-
-def execute_logic(user, selected_key):
-    os.system('mkdir ' + user)
-    [user_id, user_id_unique] = variable_alocator(user, HEADERS)
-
-    while hasMore:
-        cursor, hasMore, video_buffer = video_fetcher(user, cursor, HEADERS)
-        videos[user][user_id].extend(video_buffer)
-        print(videos)
-        print("Videos found: " + str(len(videos[user][user_id])))
-        if not hasMore:
-            print("Downloading a Video! You got Lucky!")
-            download_videos(videos[user][user_id])
