@@ -50,6 +50,7 @@ def execute_logic(user, selected_key):
         print(f"Found videos: {len(videos_acc)}")
         images_acc.extend(image_fragment)
         print(f"Found images: {len(images_acc)}")
+
     
     download_videos(videos_acc, user)
     download_images(images_acc, user)
