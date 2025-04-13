@@ -90,17 +90,18 @@ def download_videos(video_list, user):
     for item in video_list:
         video_url = item[1]
         insert_video(item[0], item[2], item[1], item[3], user)
-        cmd = "wget -O " + "./" + user + "/" + user + str(count) + ".mp4 " + "'" + video_url + "'"
+        cmd = "wget -O " + "./" + user + "/" + user + str(count)+ "_" + item[0] + ".mp4 " + "'" + video_url + "'"
         os.system(cmd)
         count += 1
 
 
 def download_images(image_list, user):
     count = 0
-    os.mkdir("./" + user + "/img")
+    safe_mkdir("./" + user + "/img")
     for item in image_list:
-        image_url = item
-        cmd = "wget -O " + "./" + user + "/img/" + user + str(count) + ".jpeg " + "'" + image_url + "'"
+        img_url = item[1]
+        insert_video(item[0], item[2], item[1], item[3], user)
+        cmd = "wget -O " + "./" + user + "/img/" + user + str(count) + ".jpeg " + "'" + img_url + "'"
         os.system(cmd)
         count += 1
 
