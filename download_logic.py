@@ -41,7 +41,7 @@ def execute_logic(user, selected_key):
     jsonized_data = json.loads(data)
     user_id = jsonized_data['data']['user']['id']
     create_new_user(user_id, user)
-    os.mkdir(user)
+    safe_mkdir(user)
     
     # Getting video data.
     while hasMore:
