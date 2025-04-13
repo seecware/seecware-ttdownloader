@@ -10,10 +10,12 @@
 # # IMPORTING DEPENDENCIES
 
 from db_downloader_middleware import create_new_user, insert_video
+from functions import safe_mkdir
 
 import http.client
 import json
 import os
+
 
 UNIQUE_ID = "aweme_id"
 videos = []
