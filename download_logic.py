@@ -71,8 +71,10 @@ def video_fetcher(user_id, cursor, headers, conn):
     image_fragment = []
     for item in jsonized_data['data']['videos']:
         if (item['aweme_id'] == ""):
-            print("aux")
-            image_fragment.extend([image for image in item['images']])
+            img_counter = 1
+            for image in item["images"]:
+                image_fragment.extend([(item['video_id'] + "_" + str(img_counter),image, item['video_id'] + "_" + str(img_counter), item['title'])])
+                img_counter += 1
 
     new_cursor = jsonized_data['data']['cursor']
     hasMore = jsonized_data['data']['hasMore']
