@@ -5,12 +5,14 @@ DB_FILE = "app_data.db"
 def init_db():
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-    cursor.execute("""
+    cursor.executescript("""
     CREATE TABLE IF NOT EXISTS api_keys (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     api_key TEXT NOT NULL UNIQUE,
     email TEXT NOT NULL
-    )
+    );
+    CREATE TABLE IF NOT EXISTS videos (aweme_id text primary key, video_id text unique not null, video_url text, tittle text, user_id text not null, foreign key (user_id) references users(user_id));
+    CREATE TABLE users (user_id text primary key, username text unique not null, created timestamp default current_timestamp, updated timestamp default current_timestamp);
     """)
     conn.commit()
     conn.close()
