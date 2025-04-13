@@ -35,7 +35,7 @@ def fetch_keys():
 def add_user(user_id, user_name):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO users (user_id, username) VALUES (?, ?)", (user_id, user_name))
+    cursor.execute("INSERT OR IGNORE INTO users (user_id, username) VALUES (?, ?)", (user_id, user_name))
     conn.commit()
     conn.close()
 
@@ -43,5 +43,12 @@ def add_video(aweme_id, video_id, video_url, tittle, user_id):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     cursor.execute("INSERT INTO videos (aweme_id, video_id, video_url, tittle, user_id) VALUES(?, ?, ?, ?, ?)", (aweme_id, video_id, video_url, tittle, user_id))
+    conn.commit()
+    conn.close()
+
+def save_raw_data():
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor("INSERT INTO")
+    cursor.execute()
     conn.commit()
     conn.close()
